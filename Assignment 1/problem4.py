@@ -38,6 +38,7 @@ def integrate_step(fun,x1,x2,tol):
         return area2
     else:
         xm=0.5*(x1+x2)
+        
         a1=integrate_step(fun,x1,xm,tol/2)
         a2=integrate_step(fun,xm,x2,tol/2)
         return a1+a2
