@@ -49,16 +49,13 @@ coeff_c=np.dot(np.linalg.pinv(mat),y)
 cheb_fit=np.dot(mat,coeff_c)
 
 
-    
+coeff_l=np.polynomial.legendre.legfit(x,y,ord)
+leg_fit=np.dot(np.transpose(legmat(ord,n)),coeff_l)
 
+plt.clf();plt.plot(xnew,cheb_fit-y);plt.plot(xnew,leg_fit-y);
+plt.legend(['Chebyshev Residual','Legendre Residual'])
+plt.savefig('cheb_resids.png')
 
-coeff_l=np.polynomial.legendre.legfit(x,y,ord, full=True)
-leg_fit=np.dot(legmat(ord,n),coeff_l)
-
-plt.clf();plt.plot(xnew,cheb_fit-y);
-plt.legend(['Chebyshev Residual','Least-Squares Residual'])
-plt.savefig('cheb_lss_resids.png')
-
-print('rms error for least-squares is ',np.sqrt(np.mean((cheb_fit-y)**2)),' with max error ',np.max(np.abs(cheb_fit-y)))
-#print('rms error for chebyshev     is ',np.sqrt(np.mean((pred-y)**2)),' with max error ',np.max(np.abs(pred-y)))
+print('RMS error for Chebyshev is ',np.sqrt(np.mean((cheb_fit-y)**2)),' with max error ',np.max(np.abs(cheb_fit-y)))
+print('RMS error for Legendre is ',np.sqrt(np.mean((leg_fit-y)**2)),' with max error ',np.max(np.abs(leg_fit-y)))
 

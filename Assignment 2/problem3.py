@@ -30,21 +30,38 @@ tf=1e18
 #t=np.linspace(ti,tf,100)
 
 
-t1=time.time();
-ans_rk4=integrate.solve_ivp(fun,[ti,tf],y0);
-t2=time.time();
-print('took ',ans_rk4.nfev,' evaluations and ',t2-t1,' seconds to solve with RK4.')
+#t1=time.time();
+#ans_rk4=integrate.solve_ivp(fun,[ti,tf],y0);
+#t2=time.time();
+#print('took ',ans_rk4.nfev,' evaluations and ',t2-t1,' seconds to solve with RK4.')
 
 t1=time.time()
 ans_stiff=integrate.solve_ivp(fun,[ti,tf],y0,method='Radau')
 t2=time.time()
 print('took ',ans_stiff.nfev,' evaluations and ',t2-t1,' seconds to solve implicitly')
 
+# (a)
 # The half life of Uranium is much longer than the others, so the stiff solver is better
+# The rk4 method couldn't run on my computer for the full time interval
 
 ans=ans_stiff
+t=ans.t
+U238=ans.y[0]
+Th230=ans.y[4]
+U234=ans.y[3]
+Pb206=ans.y[-1]
 
-plt.plot(ans.t, ans.y[0])
 
+fig,[ax1,ax2,ax3]=plt.subplots(3, figsize=(6,8))
+
+# (b)
+# Plots vs t in seconds
+ax1.plot(t,U238,'r',label='U238')
+ax2.plot(t,Pb206/U238,'g',label='Pb206/U238')
+ax3.loglog(t[15:],(U234/Th230)[15:],'b',label='U234/Th230')
+
+fig.legend()
+
+# Makes sense! Lead is increasing with time. Thorium 230 production slows  after a halflife of U234
 
     
