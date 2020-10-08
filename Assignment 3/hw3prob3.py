@@ -10,7 +10,7 @@ import camb
 from matplotlib import pyplot as plt
 
 
-def A(pars,lmax=2000):
+def A(x,pars,lmax=2000):
     # Gets the spectrum for a set of parameters
     H0,ombh2,omch2,tau,As,ns=pars[:6]
     pars=camb.CAMBparams()
@@ -21,74 +21,65 @@ def A(pars,lmax=2000):
     powers=results.get_cmb_power_spectra(pars,CMB_unit='muK')
     cmb=powers['total']
     tt=cmb[:,0]    #you could return the full power spectrum here if you wanted to do say EE
-    return tt
+    return tt[x.astype(int)]
 
 
-def get_grad(x,pars, parsteps):
-    grad = np.zeros((len(x),len(parsteps)))
+def get_grad(x, pars, ds):
+    # for ds a list of parameters to vary and their indices
+    grad = np.zeros((len(x),len(pars)))
     
     # i = index of output, idx = index of gradient, d = delta of parameter
-    for i,step in enumerate(parsteps):
-
+    for i,pair in enumerate(ds):
+        # Get values
+        idx = pair[0]
+        d = pair[1]
+        
         # Generate vector [0,...,0,ds,0,...0] to add/sub to parameter vector
         delta = np.zeros(len(pars))
-        delta[i] = step
+        delta[idx] = d
         
         # Calculate the spectrum at two points, and calculate derivative
-        plus = A(pars + delta)
-        mins = A(pars - delta)
+        plus = A(x, pars + delta)
+        mins = A(x, pars - delta)
         # Set output for this index
-        grad[:,i] = (plus - mins)/(2 * step)
+        grad[:,i] = (plus - mins)/(2 * d)
+        print('grad row')
 
     return grad
 
-
-#def chop(y):
-#    if len(y)==2051: return y[2:1201]
-#    elif len(y)==1199: return y
-#    else: print('Hmmm')
 
 # Load data
 wmap=np.loadtxt('wmap_tt_spectrum_9yr_v5.txt')
 xdata,ydata,yerror=wmap[:,0],wmap[:,1],wmap[:,2]
 
-
-
-
-
-chisq=np.sum((ydata-ymodel[2:1201])**2/yerror**2)
-
-
 N=np.diag(yerror**2)
 Ninv=np.diag(1/yerror**2)
 
-pars_guess=np.array([65,0.02,0.1,0.05,2e-9,0.96])
+pars=np.array([65,0.02,0.1,0.05,2e-9,0.96])
+ymodel=A(xdata, pars)
 
-parsstep=np.array([65,0.02,0.1,0,2e-9,0.96])*0.01
-
-pars=pars_guess.copy()
-
-
-ymodel=A(pars)
-x=np.arange(len(ymodel))
-
-
-resid=ydata-ymodel[2:1201] #data minus current model
+resid=ydata-ymodel #data minus current model
 chisq=np.sum(resid**2/yerror**2)
+
+# parameters to vary
+ds = list(zip([0,1,2,4,5], np.array([65,0.02,0.1,2e-9,0.96])/70))
 
 lam=0
 for iter in range(10):
+    print('start iter')
     
-    dAdm=get_grad(x,pars, 0.01*pars)
+    dAdm=get_grad(xdata,pars, ds)
     grad=dAdm.T@(Ninv@resid)
     curv=dAdm.T@Ninv@dAdm
     
     chisqnew=chisq
     while chisqnew>=chisq:
-        step=np.linalg.inv((1+lam)*curv)@grad
+        print(chisq)
+        print('start step')
+        step=np.linalg.pinv((1+lam)*curv)@grad
         parsnew=pars+step
-        ynew=A(parsnew)
-        chisqnew=np.sum((ydata-ynew[2:1201])**2/yerror**2)
+        ynew=A(xdata, parsnew)
+        chisqnew=np.sum((ydata-ynew)**2/yerror**2)
         #increase and check again
         if lam==0: lam=1
         lam*=2
@@ -107,15 +98,15 @@ for iter in range(10):
     
     print('iteration ',iter,' has step ',step)
     
-par_errs=np.sqrt(np.diag(np.linalg.inv(lhs)))
-print('final parameters are ',pars_cur,' with errors ',par_errs)
+#par_errs=np.sqrt(np.diag(np.linalg.inv(lhs)))
+#print('final parameters are ',pars_cur,' with errors ',par_errs)
 
 
-#x=range(len(ymodel))
+x=range(2000)
 
 plt.clf();
 
 #plt.errorbar(wmap[:,0],wmap[:,1],wmap[:,2],fmt='*')
 plt.plot(xdata,ydata,'.',label='Data')
-plt.plot(x, A(pars_cur), label='Spectrum model')
+plt.plot(x, A(x, pars_cur), label='Spectrum model')
 
