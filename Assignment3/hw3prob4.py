@@ -64,60 +64,63 @@ def run_mcmc(pars,data,par_step,chifun,nstep=50000):
         chain[i,:]=pars
         chivec[i]=chi_cur
     return chain,chivec
-        
+ 
+
+#%%
+'''
+[6.84756197e+01, 2.24459632e-02, 1.16026743e-01, 2.05024029e-09, 9.69172419e-01]
+[2.37922333e+00, 5.35866653e-04, 5.29149674e-03, 3.91473939e-11, 1.35283042e-02]
+'''
+       
 # load data
 wmap=np.loadtxt('wmap_tt_spectrum_9yr_v5.txt')
 xdata,ydata,yerror=wmap[:,0],wmap[:,1],wmap[:,2]
 data=[xdata,ydata,yerror]
 
-# initial guess
-pars=np.array([65,0.02,0.1,2e-9,0.96, 0.05])
-pars_sigs0=np.array([1,0.0005,0.005,1e-10,0.01,0.01])
+# initial guess from LM
+params=np.array([6.84756197e+01, 2.24459632e-02, 1.16026743e-01, 2.05024029e-09, 9.69172419e-01, 0.05])
+errors=np.array([2.37922333, 5.35866653e-04, 5.29149674e-03, 3.91473939e-11, 1.35283042e-02, 0.01])
 
 # first run
-chain1,chivec1=run_mcmc(pars,data,pars_sigs0,get_chisq,nstep=200x0)
-# pars_sigs1=np.std(chain1,axis=0)
+chain1,chivec1=run_mcmc(params,data,errorsLM,get_chisq,nstep=10000)
+params1=np.mean(chain1,axis=0)
+errors1=np.std(chain1,axis=0)
 
 # # improved
-# chain2,chivec2=run_mcmc(pars,data,pars_sigs1,get_chisq,nstep=20)
-# pars_sigs2=np.std(chain2,axis=0)
-# print('sigmas after improved chain ', pars_sigs2)
+# chain2,chivec2=run_mcmc(params1,data,errors1,get_chisq,nstep=20)
+# params2=np.mean(chain2,axis=0)
+# errors2=np.std(chain2,axis=0)
+# print('sigmas after improved chain ', errors2)
 
 # # improved again
-# pars_new=pars+5*np.random.randn(len(pars))*pars_sigs2
-# chain3,chivec3=run_mcmc(pars_new,data,pars_sigs2,get_chisq,nstep=50)
-# pars_sigs3=np.std(chain2,axis=0)
-# print("sigmas after improved again ", pars_sigs3)
+# pars_new=params+5*np.random.randn(len(params))*errors2
+# chain3,chivec3=run_mcmc(pars_new,data,errors2,get_chisq,nstep=50)
+# params3=np.mean(chain3,axis=0)
+# errors3=np.std(chain3,axis=0)
+# print("sigmas after improved again ", errors3)
 
 
-plt.plot(chain1[:,0])
-plt.plot(chain1[:,1])
-plt.plot(chain1[:,2])
-plt.plot(chain1[:,3])
-plt.plot(chain1[:,4])
-plt.plot(chain1[:,5])
 
 #%%
 
+for i in range(6):plt.plot(chain1[:,i])
+
+#%%
+
+for i in range(6):
+    ffti=np.abs(np.fft.rfft(chain1[:,i]))
+    plt.loglog(ffti/ffti.max(), label='Param %s'%i)
+    
+plt.legend()
+
+#%%
+
+print('final parameters with errors:')
+for par,err in zip(params1,errors1): print('&=%.3g \\pm %.1g \\\\' %(par,err)) 
 
 
 
-# chains = monte(params, steps)
-# params = np.mean(chains,axis=0)
-# errors = np.std(chains, axis=0)
-# cmb = get_spectrum(ls, params)
-# chisq = chisqr(wmap[:,1], cmb, wmap[:,2])
-# fig, ax = plt.subplots(2,1, sharex=True)
-# res_ax = ax[0]
-# dat_ax = ax[1]
 
-# plot_res(res_ax, wmap[:,0], studentized(wmap[:,1], cmb, wmap[:,2]))
-# plot_dat(dat_ax, wmap[:,0], wmap[:,1], wmap[:,2])
-# plot_func(dat_ax, ls, cmb, label="fit")
-# dat_ax.legend()
-
-# print("𝛘² = %.3f" % chisq)
-# plt.show(block=True)
 
 
 

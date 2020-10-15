@@ -138,7 +138,7 @@ print("Final answer: %s" % pars)
 print("Gives 𝛘² = %.3f\n" % chisq)
 
     
-    
+#%% 
     
     
 pars_errs=np.sqrt(np.diag(np.linalg.inv(curv)))
@@ -148,11 +148,20 @@ print('final parameters with errors:')
 for par,err in zip(pars,pars_errs): print('%.3g +- %.1g' %(par,err)) 
 
 
-x=range(2000)
+#x=np.linspace(0,2000,2000)
+x=xdata
 
 plt.clf();
 
-#plt.errorbar(wmap[:,0],wmap[:,1],wmap[:,2],fmt='*')
-plt.plot(xdata,ydata,'.',label='Data')
-plt.plot(x, A(x, pars), label='Spectrum model')
+plt.errorbar(wmap[:,0],wmap[:,1],wmap[:,2],zorder=0)
+#plt.plot(xdata,ydata,'.',label='Data')
+plt.plot(x, A(x, pars),'r', label='Spectrum model',zorder=10)
+
+
+#%%
+
+
+for div in (50.,70.,100.):
+    grad=get_grad(xdata,pars, list(zip([0,1,2,3,4], np.array([65,0.02,0.1,2e-9,0.96])/div)))
+    plt.plot(xdata,grad[:,0])
 
