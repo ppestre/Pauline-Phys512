@@ -30,5 +30,17 @@ L15 Oct 28 - (nbody)
 L16 Nov 2 - (nbody)
 L17 Nov 4
 
-(HW due)
+(LIGO HW due)
+
+L18 Nov 9 
+L19 Nov 11
+
+L20 Nov 16
+L21 Nov 18
+
+L22 Nov 24
+L23 Nov 25
+
+(rand HW due)
+
 
