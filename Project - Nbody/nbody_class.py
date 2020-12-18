@@ -6,10 +6,10 @@ Created on Mon Dec 14 14:41:47 2020
 """
 
 import numpy as np
-from numba import jit
+# from numba import jit
           
 class Space:
-    def __init__(self, pos, vel, m=1.0, dt=0.01, G=0.1,ncells=100, lims=None):
+    def __init__(self, pos, vel, lims, m=1.0, dt=0.01, G=0.1, ncells=100):
         try: self.m=m.copy()
         except: self.m=m
         
@@ -37,13 +37,13 @@ class Space:
         
         self.calc_Greens() # do once
 
-        self.calc_forces() # includes density and potential
+        self.calc_accel() # includes density and potential
         
         print('Initialized!')
 
     def calc_density(self, pos=None):
         if pos is None: pos=self.positions
-        self.density, self.edges = np.histogramdd(pos, bins=self.ncells, range=self.lims)
+        self.density, self.edges = np.histogramdd(pos, bins=self.ncells, range=self.lims, weights=self.m)
         return self.density
     
     def calc_Greens(self, soft=0.1):
@@ -59,10 +59,10 @@ class Space:
         self.potential = np.roll(np.real(np.fft.ifftn(dFT * gFT)),1,(0,1,2))
         return self.potential
 
-    def calc_forces(self,pos=None): #take derivative of potential, -gradV=F=ma
+    def calc_accel(self,pos=None): #take derivative of potential, -gradU=F=ma,-gradV=F=m
         if pos is None: pos=self.positions
-        self.forces = -self.grad(self.calc_potential(pos)) # np.array(np.gradient(self.calc_potential(pos)))
-        return self.forces
+        self.accel = -self.grad(self.calc_potential(pos)) # np.array(np.gradient(self.calc_potential(pos)))
+        return self.accel
     
     def to_grid(self,r): 
 
@@ -92,7 +92,7 @@ class Space:
         dt= self.dt
         
         rs_mid = self.positions + 0.5*dt*self.velocities
-        a_grid = self.calc_forces(rs_mid)/self.m
+        a_grid = self.calc_accel(rs_mid) # returns F/m
         
         for n,(r,v) in enumerate(zip(self.positions,self.velocities)):
             if self.is_in(r):

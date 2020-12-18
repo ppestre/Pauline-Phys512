@@ -11,7 +11,6 @@ from nbody_class import Space
 from celluloid import Camera
 
 
-
 def plot3(field, lims, slice=(0,0,0), sum=False, figaxes=None):
     
     if figaxes is None: fig, axes = plt.subplots(1,3, figsize=(10,3))
@@ -45,7 +44,7 @@ def plot3(field, lims, slice=(0,0,0), sum=False, figaxes=None):
     
     return fig, axes
 
-q = 3
+q = 4
 
 if q==1:
     
@@ -57,6 +56,7 @@ if q==1:
     # Single particle at origin, at rest
     rs = [[0.,0.,0.,]]
     vs = [[0.,0.,0.,]]
+    m  =  1
     
     # Create an instance of Space
     p = Space(pos=np.array(rs),
@@ -66,7 +66,7 @@ if q==1:
        
     numplots=10
     numsteps=30
-    loop = 1
+    looping = 1
     
     fig = plt.figure()
     camera = Camera(fig)
@@ -74,7 +74,7 @@ if q==1:
     plt.ylim(lims[0])
     
     
-    if loop:
+    if looping:
         for i in range(numplots):
 
             plt.plot(p.positions[:,1], p.positions[:,0],'o')
@@ -86,8 +86,6 @@ if q==1:
     # animation = camera.animate()
     # animation.save('single_particle.gif')
 
-    
-    
     
 if q==2:
     
@@ -110,14 +108,14 @@ if q==2:
     
     numplots=50
     numsteps=10
-    loop = 1
+    looping = 1
     
     fig = plt.figure(figsize=(5,5))
     camera = Camera(fig)
     plt.xlim(lims[1])
     plt.ylim(lims[0])
     
-    if loop:
+    if looping:
         for j in range(numplots):
             plt.plot(p.positions[:,1], p.positions[:,0],'bo')
             plt.pause(.01)
@@ -130,7 +128,7 @@ if q==2:
 
 if q==3:
     
-     # Set limits in x,y,z
+    # Set limits in x,y,z
     lims = ((-20,20),(-20,20),(-20,20))
     # Number of cells on each axis
     ncells = 101
@@ -153,11 +151,11 @@ if q==3:
     
     numplots=50
     numsteps=10
-    loop = 1
+    looping = 1
 
     camera = Camera(fig)
 
-    if loop:
+    if looping:
         for j in range(numplots):
             plot3(p.density, lims, sum=True, figaxes=(fig,axes))
             plt.pause(.01)
@@ -166,6 +164,62 @@ if q==3:
             camera.snap()
 
         animation = camera.animate()
-        animation.save('circular_BC_many.gif')
+        animation.save('circular_BC_many2.gif')
 
+if q==4:
+    
+    # Set limits in x,y,z
+    lims = ((-20,20),(-20,20),(-20,20))
+    # Number of cells on each axis
+    ncells = 51
+    
+    # Make a grid in kspace.
+    x = np.linspace(*lims[0],ncells)
+    y = np.linspace(*lims[1],ncells)
+    z = np.linspace(*lims[2],ncells)
+    kgrid = np.meshgrid(2*np.pi/x,2*np.pi/y,2*np.pi/z)
+    gridk = np.sqrt(np.sum(np.square(kgrid), axis=0))
+    invk3 = 1/np.power(gridk,3)
+    
 
+    
+    
+    
+    noise = np.random.normal(size=invk3.shape)
+    
+    density = np.abs(np.fft.ifftn(invk3*np.fft.fftn(noise)))
+    
+
+    rs = np.array([(xval,yval,zval) for xval in x for yval in y for zval in z])
+    ms = density.flatten()
+    vs = np.zeros(rs.shape)         
+                
+    # Create an instance of Space
+    p = Space(pos = rs, vel = vs, m = ms,
+              ncells=ncells, 
+              lims=lims)
+    
+    fig,axes = plot3(p.density, lims, sum=True)
+    plt.tight_layout()
+    
+    # Make some plots!
+    
+    numplots=40
+    numsteps=10
+    looping = 0
+
+    camera = Camera(fig)
+
+    if looping:
+        for j in range(numplots):
+            plot3(p.density, lims, sum=True, figaxes=(fig,axes))
+            plt.pause(.01)
+            for k in range(numsteps):
+                p.update()
+            camera.snap()
+            print(j)
+
+        animation = camera.animate()
+        animation.save('k3.gif')
+
+    

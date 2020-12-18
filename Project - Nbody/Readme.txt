@@ -20,5 +20,5 @@ Part 3:
 
 Part 4: 
 	Start with a 1/k^3 grid in kspace. Multiply by gaussian noise, and inverse FT to get starting density. 
-	Code still needs so tweaks to handle this well.
+	The universe looks a bit lumpy! Could use some tweaks to make it a bit more efficient, but it's somethin.
 	
