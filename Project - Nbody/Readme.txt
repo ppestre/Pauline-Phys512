@@ -14,13 +14,11 @@ Part 2:
 	(v_i approx from Virial theorem)
 
 Part 3: 
-	See gifs by number of particles and steps. Tried a few, the big ones took a while.
-	Potential energy is conserved to within floating point error. 
-	Kinetic energy is conserved to within 0.3% (in one example). I expect some slight rounding error from approximating 
-	a point to have the average acceleration value of its grid cell, even if it's near the edge.
+	For periodic boundary conditions, see 'circular_BC_many'. Didn't get around to non-periodic :(
+	Energy is not very well conserved. There are a lot of approximations in this method, 
+	and poor accounting for particles that disappear off the edge. 
 
 Part 4: 
 	Start with a 1/k^3 grid in kspace. Multiply by gaussian noise, and inverse FT to get starting density. 
 	The universe looks a bit lumpy! Could use some tweaks to make it a bit more efficient, but it's somethin.
-	Seeing some weird edge behaviour?
 	

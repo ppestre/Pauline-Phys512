@@ -46,7 +46,7 @@ def plot3(field, lims, slice=(0,0,0), sum=False, figaxes=None):
 
 
 # Change index q to run different parts
-q = 3
+q = 4
 
 if q==1:
     
@@ -132,11 +132,11 @@ if q==3:
     # Set limits in x,y,z
     lims = ((-20,20),(-20,20),(-20,20))
     # Number of cells on each axis
-    ncells = 51
+    ncells = 5
     # Number of particles
-    nparts = 200000
+    nparts = 20#0000
     # Boundary conditions
-    periodic = True
+    periodic = False
     
     # Two particles moving in opposite directions
     rs = np.random.uniform(*lims[0],(nparts,3))
@@ -152,53 +152,29 @@ if q==3:
     plt.tight_layout()
     # Make some plots!
     
-    numplots=25
-    numsteps=30
+    numplots=50
+    numsteps=10
     looping = 1
 
     camera = Camera(fig)
-    
-    Epot=[]
-    Ekin=[]
-    
+
     if looping:
         for j in range(numplots):
             plot3(p.density, lims, sum=True, figaxes=(fig,axes))
-            #plt.pause(.01)
+            plt.pause(.01)
             for k in range(numsteps):
                 p.update()
             camera.snap()
-            print(j)
-            Epot.append(p.Epot)
-            Ekin.append(p.Ekin)
 
         animation = camera.animate()
-        #animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,numplots,numsteps))
-        
-    if looping:
-        for j in range(numplots):
-            plot3(p.density, lims, sum=True, figaxes=(fig,axes))
-            #plt.pause(.01)
-            for k in range(numsteps):
-                p.update()
-            camera.snap()
-            print(j)
-            Epot.append(p.Epot)
-            Ekin.append(p.Ekin)
-
-        animation = camera.animate()
-        #animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,2*numplots,numsteps))
-
-        print(np.diff(Epot)/np.mean(Epot))
-        print(np.diff(Ekin)/np.mean(Ekin))
-        
+        animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,numplots,numsteps))
 
 if q==4:
     
     # Set limits in x,y,z
     lims = ((-20,20),(-20,20),(-20,20))
     # Number of cells on each axis
-    ncells = 25
+    ncells = 51
     
     # Make a grid in kspace, then calculate 1/k^3 at each point.
     # There are smarter ways to do this but shhhhh...

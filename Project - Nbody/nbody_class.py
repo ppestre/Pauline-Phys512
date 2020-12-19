@@ -117,9 +117,7 @@ class Space:
                 v_mid = v + 0.5*a*dt
                 self.positions[l]  = r + dt*v_mid
                 self.velocities[l] = v + dt*a
-        
-        self.Epot = np.sum(self.potential) # if mass=1
-        self.Ekin = 0.5*np.sum(np.square(self.potential))         
+
                 
         self.calc_density()
         # print('updated')
