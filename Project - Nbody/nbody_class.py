@@ -9,7 +9,8 @@ import numpy as np
 # from numba import jit
           
 class Space:
-    def __init__(self, pos, vel, lims, m=1.0, dt=0.01, G=0.1, ncells=100):
+    def __init__(self, pos, vel, lims, m=1.0, dt=0.01, G=0.1, ncells=100, periodic=True):
+        
         try: self.m=m.copy()
         except: self.m=m
         
@@ -17,9 +18,8 @@ class Space:
         self.velocities = vel.copy()
         self.dt= dt
         self.G = G
+        self.periodic = periodic
         
-        if lims is None: print('oopsie')
-
         self.lims = lims
         self.x = np.linspace(*lims[0],ncells)
         self.y = np.linspace(*lims[1],ncells)
@@ -43,7 +43,12 @@ class Space:
 
     def calc_density(self, pos=None):
         if pos is None: pos=self.positions
-        self.density, self.edges = np.histogramdd(pos, bins=self.ncells, range=self.lims, weights=self.m)
+        if hasattr(self.m, "__len__"): 
+            self.density,  self.edges  = np.histogramdd(pos, bins=self.ncells,
+                                                        range=self.lims, 
+                                                        weights=self.m)
+        else: self.density, self.edges = np.histogramdd(pos, bins=self.ncells,
+                                                        range=self.lims)
         return self.density
     
     def calc_Greens(self, soft=0.1):
@@ -56,51 +61,63 @@ class Space:
         if pos is None: pos=self.positions
         dFT = np.fft.fftn(self.calc_density(pos))
         gFT = np.fft.fftn(np.fft.fftshift(self.Greens))
-        self.potential = np.roll(np.real(np.fft.ifftn(dFT * gFT)),1,(0,1,2))
+        if self.periodic:
+            pot = np.real(np.fft.ifftn(dFT * gFT))
+        else:
+            dFTpad = np.pad(dFT,((0, self.ncells),))
+            gFTpad = np.pad(dFT,((0, self.ncells),))
+            potpad = np.real(np.fft.ifftn(dFTpad * gFTpad))
+            pot = potpad[:self.ncells,:self.ncells,:self.ncells]
+        self.potential = np.roll(pot,1,(0,1,2)) #mysterious off-by-one?
         return self.potential
 
     def calc_accel(self,pos=None): #take derivative of potential, -gradU=F=ma,-gradV=F=m
         if pos is None: pos=self.positions
-        self.accel = -self.grad(self.calc_potential(pos)) # np.array(np.gradient(self.calc_potential(pos)))
+        self.accel = -self.grad(self.calc_potential(pos)) 
+        # -np.array(np.gradient(self.calc_potential(pos)))
         return self.accel
     
     def to_grid(self,r): 
 
-        # r0 =  r - np.mean(lims,axis=1) # this is the center! make the corner
         r0=np.array(self.lims)[:,0]
         span = np.diff(self.lims[0])
         
         i,j,k = ((r-r0)*(self.ncells)/span).astype(int)
         return i,j,k
     
-    def grad(self,pot):
+    def grad(self,pot): #tried using np.gradient but was getting some indexing bugs
         gx = (np.roll(pot, -1, axis=0) - np.roll(pot, 1, axis=0)) / (2 * self.dx) 
         gy = (np.roll(pot, -1, axis=1) - np.roll(pot, 1, axis=1)) / (2 * self.dx)
         gz = (np.roll(pot, -1, axis=2) - np.roll(pot, 1, axis=2)) / (2 * self.dx)
         return np.array([gx,gy,gz])
     
-    def is_in(self, r):
-        xmin,xmax = self.lims[0]
-        ymin,ymax = self.lims[1]
-        zmin,zmax = self.lims[2]
-
-        return ((xmin <= r[0] < xmax) and
-                (ymin <= r[1] < ymax) and 
-                (zmin <= r[2] < zmax))
+    def is_in(self, i,j,k):
+        return ((0 <= i < self.ncells) and
+                (0 <= j < self.ncells) and 
+                (0 <= k < self.ncells))
     
     def update(self):
+        
         dt= self.dt
+        n = self.ncells
         
         rs_mid = self.positions + 0.5*dt*self.velocities
         a_grid = self.calc_accel(rs_mid) # returns F/m
         
-        for n,(r,v) in enumerate(zip(self.positions,self.velocities)):
-            if self.is_in(r):
-                i,j,k = self.to_grid(r)
+        for l,(r,v) in enumerate(zip(self.positions,self.velocities)):
+            i,j,k = self.to_grid(r)
+            if self.periodic:
+                i,j,k = i%n,j%n,k%n
                 a = a_grid[:,i,j,k]
                 v_mid = v + 0.5*a*dt
-                self.positions[n]  = r + dt*v_mid
-                self.velocities[n] = v + dt*a
+                self.positions[l]  = r + dt*v_mid
+                self.velocities[l] = v + dt*a
+            elif self.is_in(i,j,k):
+                a = a_grid[:,i,j,k]
+                v_mid = v + 0.5*a*dt
+                self.positions[l]  = r + dt*v_mid
+                self.velocities[l] = v + dt*a
+
                 
         self.calc_density()
         # print('updated')

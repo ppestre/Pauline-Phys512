@@ -44,6 +44,8 @@ def plot3(field, lims, slice=(0,0,0), sum=False, figaxes=None):
     
     return fig, axes
 
+
+# Change index q to run different parts
 q = 4
 
 if q==1:
@@ -76,7 +78,6 @@ if q==1:
     
     if looping:
         for i in range(numplots):
-
             plt.plot(p.positions[:,1], p.positions[:,0],'o')
             plt.pause(.01)
             camera.snap()
@@ -106,7 +107,7 @@ if q==2:
     
     # Make some plots!
     
-    numplots=50
+    numplots=25
     numsteps=10
     looping = 1
     
@@ -117,7 +118,7 @@ if q==2:
     
     if looping:
         for j in range(numplots):
-            plt.plot(p.positions[:,1], p.positions[:,0],'bo')
+            plt.plot(p.positions[:,1], p.positions[:,0],'o')
             plt.pause(.01)
             for k in range(numsteps):
                 p.update()
@@ -131,9 +132,11 @@ if q==3:
     # Set limits in x,y,z
     lims = ((-20,20),(-20,20),(-20,20))
     # Number of cells on each axis
-    ncells = 101
+    ncells = 5
     # Number of particles
-    nparts = 200000
+    nparts = 20#0000
+    # Boundary conditions
+    periodic = False
     
     # Two particles moving in opposite directions
     rs = np.random.uniform(*lims[0],(nparts,3))
@@ -164,7 +167,7 @@ if q==3:
             camera.snap()
 
         animation = camera.animate()
-        animation.save('circular_BC_many2.gif')
+        animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,numplots,numsteps))
 
 if q==4:
     
@@ -173,13 +176,16 @@ if q==4:
     # Number of cells on each axis
     ncells = 51
     
-    # Make a grid in kspace.
+    # Make a grid in kspace, then calculate 1/k^3 at each point.
+    # There are smarter ways to do this but shhhhh...
     x = np.linspace(*lims[0],ncells)
     y = np.linspace(*lims[1],ncells)
     z = np.linspace(*lims[2],ncells)
     kgrid = np.meshgrid(2*np.pi/x,2*np.pi/y,2*np.pi/z)
     gridk = np.sqrt(np.sum(np.square(kgrid), axis=0))
     invk3 = 1/np.power(gridk,3)
+    
+    print('Please ignore divide by zero warning :P')
     
 
     
@@ -192,7 +198,8 @@ if q==4:
 
     rs = np.array([(xval,yval,zval) for xval in x for yval in y for zval in z])
     ms = density.flatten()
-    vs = np.zeros(rs.shape)         
+    vs = np.zeros(rs.shape)     
+    nparts = len(rs)    
                 
     # Create an instance of Space
     p = Space(pos = rs, vel = vs, m = ms,
@@ -204,9 +211,9 @@ if q==4:
     
     # Make some plots!
     
-    numplots=40
-    numsteps=10
-    looping = 0
+    numplots=50
+    numsteps=15
+    looping = 1
 
     camera = Camera(fig)
 
@@ -216,10 +223,11 @@ if q==4:
             plt.pause(.01)
             for k in range(numsteps):
                 p.update()
-            camera.snap()
             print(j)
+            camera.snap()
+
 
         animation = camera.animate()
-        animation.save('k3.gif')
+        animation.save('k3_%iparts_%ix%isteps.gif'%(nparts,numplots,numsteps))
 
     
