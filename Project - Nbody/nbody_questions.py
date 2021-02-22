@@ -130,7 +130,7 @@ if q==2:
 if q==3:
     
     # Set limits in x,y,z
-    lims = ((-20,20),(-20,20),(-20,20))
+    lims = ((-100,100),(-100,100),(-100,100))
     # Number of cells on each axis
     ncells = 51
     # Number of particles
@@ -155,7 +155,6 @@ if q==3:
     numplots=25
     numsteps=30
     looping = 1
-
     camera = Camera(fig)
     
     Epot=[]
@@ -173,7 +172,7 @@ if q==3:
             Ekin.append(p.Ekin)
 
         animation = camera.animate()
-        #animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,numplots,numsteps))
+        animation.save('Periodic%s_%iparts_%ix%isteps_big.gif'%(periodic,nparts,numplots,numsteps))
         
     if looping:
         for j in range(numplots):
@@ -187,7 +186,7 @@ if q==3:
             Ekin.append(p.Ekin)
 
         animation = camera.animate()
-        #animation.save('Periodic%s_%iparts_%ix%isteps.gif'%(periodic,nparts,2*numplots,numsteps))
+        animation.save('Periodic%s_%iparts_%ix%isteps_big.gif'%(periodic,nparts,2*numplots,numsteps))
 
         print(np.diff(Epot)/np.mean(Epot))
         print(np.diff(Ekin)/np.mean(Ekin))
